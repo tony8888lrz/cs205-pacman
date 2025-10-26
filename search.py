@@ -90,49 +90,11 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    stack = [(problem.getStartState(), [])]
-    visited = set()
-
-    while stack:
-        state, path = stack.pop()
-
-        if state in visited:
-            continue
-        visited.add(state)
-
-        if problem.isGoalState(state):
-            return path
-        
-        for successor, action, cost in problem.getSuccessors(state):
-            if successor not in visited:
-                stack.append((successor, path + [action]))
-
-    return []
-
     util.raiseNotDefined()
 
 def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    from collections import deque
-    queue = deque([(problem.getStartState(), [])])
-    visited = set()
-
-    while queue:
-        state, path = queue.popleft()
-
-        if state in visited:
-            continue
-        visited.add(state)
-
-        if problem.isGoalState(state):
-            return path
-
-        for successor, action, cost in problem.getSuccessors(state):
-            if successor not in visited:
-                queue.append((successor, path + [action]))
-            
-
     util.raiseNotDefined()
 
 def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
@@ -147,10 +109,57 @@ def nullHeuristic(state, problem=None) -> float:
     """
     return 0
 
+from util import PriorityQueue
+
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directions]:
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    #util.raiseNotDefined()
+    
+    # Explored nodes
+    explored = {}
+    # Cost from start to current node
+    g = {}
+    
+    # Initialize cost, heuristic, and estimated cost
+    g[problem.getStartState()] = 0
+    h = heuristic(problem.getStartState(), problem)
+    f =  g[problem.getStartState()] + h
+    
+    # Open list (priority queue)
+    open = PriorityQueue()
+    # Item has the state, actions, and cost from start to current node
+    # Priority is f so we know the next node to pop
+    open.push((problem.getStartState(), [], g[problem.getStartState()]), f)
+    
+    while(open):
+        # Remove first node of open
+        st_current, a, cost_current = open.pop()
+        
+        # If current state is at goal then end and return actions
+        if problem.isGoalState(st_current):
+            return a
+        
+        # Skip if state is explored with cheaper or same cost
+        if (st_current in explored) and (explored[st_current] <= cost_current):
+            continue
+        
+        explored[st_current] = cost_current
+        # Check neighbors of current state
+        for successor, action, stepCost in problem.getSuccessors(st_current):    
+            cost_new = cost_current + stepCost
+            
+            # If neighbor exist in past cost then update if the new cost is lower
+            if (successor not in g) or (g[successor] > cost_new):
+                g[successor] = cost_new
+                f = cost_new + heuristic(successor, problem)
+                
+                # Add successor to nodes to explore
+                open.push((successor, a + [action], cost_new), f)
+    
+    return []
+
+# Reference all class materials and lecture notes
 
 # Abbreviations
 bfs = breadthFirstSearch
