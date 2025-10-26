@@ -194,7 +194,7 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directi
     h = heuristic(problem.getStartState(), problem)
     f =  g[problem.getStartState()] + h
     
-    # Open list (priority queue)
+    # Priority queue to store (state, actions, cost) with cost as priority
     open = PriorityQueue()
     # Item has the state, actions, and cost from start to current node
     # Priority is f so we know the next node to pop
