@@ -296,14 +296,15 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (self.startingPosition, tuple([False] * len(self.corners)))
 
     def isGoalState(self, state: Any):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        position, cornersVisited = state
+        return all(cornersVisited)
 
     def getSuccessors(self, state: Any):
         """
@@ -317,6 +318,8 @@ class CornersProblem(search.SearchProblem):
         """
 
         successors = []
+        position, cornersVisited = state
+
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
@@ -326,6 +329,22 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            x, y = position
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            hitsWall = self.walls[nextx][nexty]
+
+            if not hitsWall:
+                nextPosition = (nextx, nexty)
+
+                # Create a new corners visited tuple
+                newCornersVisited = list(cornersVisited)
+                for i, corner in enumerate(self.corners):
+                    if nextPosition == corner:
+                        newCornersVisited[i] = True
+
+                nextState = (nextPosition, tuple(newCornersVisited))
+                successors.append((nextState, action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -362,7 +381,68 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+
+    position, cornersVisited = state
+
+    # If all corners visited, return 0
+    if all(cornersVisited):
+        return 0
+
+    # Get unvisited corners
+    unvisitedCorners = []
+    for i, visited in enumerate(cornersVisited):
+        if not visited:
+            unvisitedCorners.append(corners[i])
+
+    if not unvisitedCorners:
+        return 0
+
+    # Helper function to calculate Manhattan distance
+    def manhattanDistance(pos1, pos2):
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+    # If only one corner left, return distance to it
+    if len(unvisitedCorners) == 1:
+        return manhattanDistance(position, unvisitedCorners[0])
+
+    # Calculate MST of unvisited corners using Prim's algorithm
+    def calculateMST(points):
+        if len(points) <= 1:
+            return 0
+
+        # Start with first point
+        inMST = [False] * len(points)
+        minCost = [float('inf')] * len(points)
+        minCost[0] = 0
+        totalCost = 0
+
+        for _ in range(len(points)):
+            # Find minimum cost vertex not in MST
+            u = -1
+            for v in range(len(points)):
+                if not inMST[v] and (u == -1 or minCost[v] < minCost[u]):
+                    u = v
+
+            inMST[u] = True
+            totalCost += minCost[u]
+
+            # Update costs of adjacent vertices
+            for v in range(len(points)):
+                if not inMST[v]:
+                    cost = manhattanDistance(points[u], points[v])
+                    if cost < minCost[v]:
+                        minCost[v] = cost
+
+        return totalCost
+
+    # Calculate distance to nearest unvisited corner
+    minDistToCorner = min(manhattanDistance(position, corner) for corner in unvisitedCorners)
+
+    # Calculate MST of unvisited corners
+    mstCost = calculateMST(unvisitedCorners)
+
+    # Return the sum: distance to nearest corner + MST of remaining corners
+    return minDistToCorner + mstCost
 
 
 
