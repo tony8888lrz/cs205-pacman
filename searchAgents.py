@@ -346,7 +346,7 @@ class CornersProblem(search.SearchProblem):
                 nextState = (nextPosition, tuple(newCornersVisited))
                 successors.append((nextState, action, 1))
 
-        self._expanded += 1 # DO NOT CHANGE
+        self._expanded += 1
         return successors
 
     def getCostOfActions(self, actions):
@@ -533,7 +533,19 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    
+    cost = 0
+    # get list of food coordinates
+    food_coordinates = foodGrid.asList()
+    
+    # find the distance of food from pacman
+    for food in food_coordinates:
+        current_cost = mazeDistance(position, food, problem.startingGameState)
+        
+        if current_cost > cost:
+            cost = current_cost
+    
+    return cost
 
 
 class ClosestDotSearchAgent(SearchAgent):
@@ -565,7 +577,11 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        
+        # finds shortest path (bfs explores each level so first food explored is the closest)
+        result = search.breadthFirstSearch(problem)
+        return result
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -601,8 +617,13 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        #util.raiseNotDefined()
+        
+        # check if the current position is the goal
+        #return true if there is food else return false
+        goal = self.food[x][y]
+        return goal
+        
 def mazeDistance(point1: Tuple[int, int], point2: Tuple[int, int], gameState: pacman.GameState) -> int:
     """
     Returns the maze distance between any two points, using the search functions
